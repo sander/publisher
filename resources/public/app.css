@@ -1,0 +1,23 @@
+body {
+  line-height: 1.2;
+  font-size: 14px;
+  font-family: Helvetica, sans-serif;
+}
+
+ul {
+  margin: 0;
+  width: 120px;
+  float: left;
+  list-style: none;
+  padding: 0;
+}
+
+ul li {
+  cursor: pointer;
+  padding: 6px;
+}
+
+ul li.selected {
+  background: blue;
+  color: white;
+}
