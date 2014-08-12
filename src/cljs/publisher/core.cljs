@@ -17,7 +17,10 @@
 (fw/watch-and-reload :websocket-url "ws://localhost:3449/figwheel-ws")
 
 (def r (t/reader :json))
-(def app-state (atom {:docs []}))
+(def app-state (atom {:docs []
+                      :selected [nil]
+                      :content ["not loaded yet"]
+                      :content-loaded [false]}))
 
 (defn concatv [vs] (vec (apply concat vs)))
 (defrecord Doc [folder name])
@@ -39,60 +42,36 @@
                 (.send)))))
 (defn get-docs [] (go (t/read r (<! (xhr-get-text "docs")))))
 
-(defn item-view [item owner]
-  (reify
-    om/IRenderState
-    (render-state [this {:keys [select selected]}]
-      (dom/li #js {:className (if (= selected item) "selected" "")
-                   :onClick #(put! select item)}
-              (:name item)))))
+(defn item-view [{:keys [item selected content-loaded]} _]
+  (om/component
+    (dom/li #js {:className (if (= (selected 0) item) "selected" "")
+                 :onClick (fn [_]
+                            (om/update! selected [0] item)
+                            (om/update! content-loaded [0] false))}
+            (:name item))))
 
-(defn display [doc owner]
-  (reify
-    om/IInitState
-    (init-state [_]
-      (print "initting" (:name doc))
-      {:doc-content "not loaded yet"})
-    om/IWillMount
-    (will-mount [_]
-      (print "doccing" (:name doc))
-      (go (let [content (<! (xhr-get-text "docs"))]
-            (om/set-state! owner :doc-content content))))
-    om/IRenderState
-    (render-state [this {:keys [doc-content]}]
-      (dom/div nil
-               (dom/p nil (:name doc))
-               (dom/p nil doc-content)))))
-
-; nicer to have "opened" as app state b/c that remains after reload
-; not
-
-; seems that with cursors, it still makes sense to have the docs list and doc selection under one cursor handled by an item-list component
-
-; can opened as a chan be part of app-state?
+(defn display [{:keys [doc content content-loaded]} _]
+  (om/component
+    (when (and doc (not (content-loaded 0)))
+      (go (let [new-content (<! (xhr-get-text "docs"))]
+            (om/update! content [0] (str (:name @doc) " *** " new-content))
+            (om/update! content-loaded [0] true))))
+    (dom/div nil
+             (dom/p nil (:name doc))
+             (dom/p nil (content 0)))))
 
 (defn widget [app owner]
-  (reify
-    om/IInitState
-    (init-state [_] {:open (chan)})
-    om/IWillMount
-    (will-mount [_]
-      (let [open (om/get-state owner :open)]
-        (go-loop []
-                 (let [doc (<! open)]
-                   ;(om/transact! app :opened (fn [] doc))
-                   (om/set-state! owner :opened doc)
-                   (recur)))))
-    om/IRenderState
-    (render-state [this {:keys [open opened]}]
-      (dom/div nil
-               (apply dom/ul nil
-                      (om/build-all item-view (docs app)
-                                    {:init-state {:select open}
-                                     :state {:selected opened}}))
-               (om/build display opened {:init-state {:doc-content "hoi"}})
-               
-               ))))
+  (om/component
+    (dom/div nil
+             (apply dom/ul nil
+                    (mapv #(om/build item-view
+                                     {:item %
+                                      :selected (:selected app)
+                                      :content-loaded (:content-loaded app)})
+                          (docs app)))
+             (om/build display {:doc ((:selected app) 0)
+                                :content (:content app)
+                                :content-loaded (:content-loaded app)}))))
 
 (om/root widget app-state
          {:target (. js/document (getElementById "app"))})
