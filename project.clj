@@ -4,7 +4,8 @@
 
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2280"]
-                 [com.cognitect/transit-cljs "0.8.168"]
+                 [com.cognitect/transit-cljs "0.8.178"]
+                 [com.cognitect/transit-clj "0.8.247"]
                  [om "0.7.1"]
                  [org.clojure/core.async "0.1.319.0-6b1aca-alpha"]
                  [garden "1.2.1"]
@@ -13,7 +14,12 @@
                  [ring "1.2.1"]
                  [compojure "1.1.6"]
                  [enlive "1.1.5"]
-                 [figwheel "0.1.3-SNAPSHOT"]]
+                 [figwheel "0.1.3-SNAPSHOT"]
+                 [om-sync "0.1.1"]
+                 [http-kit "2.1.16"]
+                 [compojure "1.1.8"]
+                 [aleph "0.3.3"]
+                 [ring-transit "0.1.2"]]
 
   :plugins [[lein-cljsbuild "1.0.4-SNAPSHOT"]
             [com.cemerick/austin "0.1.4"]

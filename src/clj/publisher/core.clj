@@ -2,6 +2,8 @@
   (:require [cemerick.austin]
             [cemerick.austin.repls]))
 
+(defrecord Doc [folder name])
+
 (defn build-html []
   (require 'publisher.html :reload))
 (defn build-css []
